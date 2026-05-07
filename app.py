@@ -82,7 +82,7 @@ def with_posters(movies: list) -> list:
         m["poster"] = url if url else "/static/img/no_poster.png"
     return movies
 
-# ── Routes ────────────────────────────────────────────────────────────────── #
+# Routes
 
 @app.route("/")
 def index():
@@ -111,7 +111,7 @@ def similar():
     return render_template("similar.html",
                            movies=movies, query=title, error=error)
 
-# ── API ────────────────────────────────────────────────────────────────────── #
+# API
 
 @app.route("/api/poster/<movie_id>")
 def api_poster(movie_id):
