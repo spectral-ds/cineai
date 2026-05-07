@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{% if active_genre != 'All' %}{{ active_genre }} Movies{% else %}Trending Movies{% endif %} · CineAI{% endblock %}
+{% block content %}
+
+<div class="sec-head">
+  <h2>🔥 Trending <span>{% if active_genre != 'All' %}· {{ active_genre }}{% endif %}</span></h2>
+  <span class="count-pill">{{ movies|length }} movies</span>
+</div>
+
+<!-- Genre filter chips -->
+<div class="chips">
+  <a href="/popular" class="chip {% if active_genre=='All' %}on{% endif %}">All</a>
+  {% for g in genres %}
+  <a href="/popular?genre={{ g }}" class="chip {% if active_genre==g %}on{% endif %}">{{ g }}</a>
+  {% endfor %}
+</div>
+
+{% if movies %}
+<div class="grid">
+  {% for m in movies %}
+  <div class="card" onclick='openModal({{ m | tojson }})'>
+    <div class="poster">
+      <img data-id="{{ m.id }}" src="" alt="{{ m.title }}" loading="lazy"
+           onerror="this.src='/static/img/no_poster.png';this.classList.add('loaded')">
+      <div class="badge">🏆 {{ "%.2f"|format(m.score) }}</div>
+    </div>
+    <div class="info">
+      <h3>{{ m.title }}</h3>
+      <div class="tags">
+        {% for g in (m.genres_list or [])[:3] %}<span class="tag">{{ g }}</span>{% endfor %}
+      </div>
+      <div class="meta">
+        {% if m.release_date %}{{ m.release_date[:4] }}{% endif %}
+        {% if m.vote_count %}&nbsp;·&nbsp;{{ "{:,}".format(m.vote_count|int) }} votes{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty">
+  <div class="empty-icon">🎬</div>
+  <h3>No movies found</h3>
+  <p>No results for "{{ active_genre }}". <a href="/popular">View all genres</a></p>
+</div>
+{% endif %}
+
+{% endblock %}

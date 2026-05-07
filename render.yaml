@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: cineai
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app --workers 1 --timeout 120 --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: TMDB_API_KEY
+        value: 33646a32600aa482e4046ad6f3d701aa

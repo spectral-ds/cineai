@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CineAI{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0a0a0c;
+      --surface:  #111116;
+      --card:     #16161d;
+      --card2:    #1c1c25;
+      --border:   #252530;
+      --border2:  #32323f;
+      --red:      #e50914;
+      --red-dim:  rgba(229,9,20,.13);
+      --red-glow: rgba(229,9,20,.22);
+      --text:     #f0f0f5;
+      --muted:    #787890;
+      --muted2:   #50505f;
+      --gold:     #f5c518;
+      --r:        10px;
+      --rl:       14px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── NAV ── */
+    nav { background: rgba(10,10,12,.94); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .nav-inner { max-width: 1240px; margin: 0 auto; height: 62px; padding: 0 1.5rem; display: flex; align-items: center; }
+    .logo { font-size: 1.45rem; font-weight: 800; color: var(--red); text-decoration: none; letter-spacing: -.5px; margin-right: 2rem; }
+    .logo span { color: var(--text); }
+    .nav-links { display: flex; gap: .2rem; flex: 1; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: .875rem; font-weight: 500; padding: .4rem .85rem; border-radius: 8px; transition: all .15s; }
+    .nav-links a:hover { color: var(--text); background: var(--card2); }
+    .nav-links a.on { color: var(--text); background: var(--card2); }
+    .nav-right { margin-left: auto; }
+    .nav-badge { background: var(--red-dim); border: 1px solid rgba(229,9,20,.28); color: var(--red); font-size: .68rem; font-weight: 700; padding: .2rem .65rem; border-radius: 999px; letter-spacing: .5px; }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 1240px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* ── GRID ── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); gap: 1.1rem; }
+
+    /* ── CARD ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s, border-color .2s; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 18px 50px rgba(0,0,0,.65), 0 0 0 1px var(--red-glow); border-color: rgba(229,9,20,.28); }
+
+    /* poster shimmer */
+    .poster { position: relative; aspect-ratio: 2/3; background: var(--card2); overflow: hidden; }
+    .poster::before { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, var(--card2) 30%, #1e1e2a 50%, var(--card2) 70%); background-size: 200% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .poster img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .3s, transform .35s; }
+    .poster img.loaded { opacity: 1; }
+    .card:hover .poster img.loaded { transform: scale(1.05); }
+
+    /* badge */
+    .badge { position: absolute; z-index: 2; top: 8px; right: 8px; background: rgba(0,0,0,.82); border: 1px solid rgba(245,197,24,.45); color: var(--gold); font-size: .68rem; font-weight: 700; padding: 3px 7px; border-radius: 6px; }
+
+    /* card info */
+    .info { padding: .72rem .78rem .68rem; }
+    .info h3 { font-size: .82rem; font-weight: 600; line-height: 1.35; margin-bottom: .35rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: .35rem; }
+    .tag { background: var(--red-dim); color: #ff7575; font-size: .62rem; font-weight: 500; padding: 2px 6px; border-radius: 4px; }
+    .meta { font-size: .7rem; color: var(--muted); }
+
+    /* ── SECTION HEADER ── */
+    .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .sec-head h2 { font-size: 1.15rem; font-weight: 700; }
+    .sec-head h2 span { color: var(--red); }
+    .count-pill { background: var(--card2); border: 1px solid var(--border); color: var(--muted); font-size: .75rem; padding: .2rem .75rem; border-radius: 999px; }
+
+    /* ── GENRE CHIPS ── */
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.4rem; }
+    .chip { background: var(--card); border: 1px solid var(--border); color: var(--muted); font-size: .78rem; font-weight: 500; padding: .3rem .85rem; border-radius: 999px; text-decoration: none; transition: all .15s; cursor: pointer; user-select: none; }
+    .chip:hover { color: var(--text); border-color: var(--border2); }
+    .chip.on { background: var(--red); border-color: var(--red); color: #fff; }
+
+    /* ── SEARCH ── */
+    .searchbar { display: flex; gap: .5rem; max-width: 560px; margin-bottom: 1.5rem; }
+    .searchbar input { flex: 1; background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: .72rem 1.1rem; border-radius: 10px; font-size: .9rem; outline: none; font-family: inherit; transition: border-color .15s; }
+    .searchbar input:focus { border-color: var(--red); }
+    .searchbar input::placeholder { color: var(--muted2); }
+    .btn { background: var(--red); color: #fff; border: none; padding: .72rem 1.4rem; border-radius: 10px; font-size: .9rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity .15s, transform .1s; }
+    .btn:hover { opacity: .88; } .btn:active { transform: scale(.97); }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; padding: 5rem 1rem; color: var(--muted); }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty h3 { font-size: 1.05rem; color: var(--text); margin-bottom: .5rem; }
+    .empty p { font-size: .88rem; line-height: 1.6; max-width: 360px; margin: 0 auto; }
+    .empty a { color: var(--red); text-decoration: none; }
+
+    /* ── MODAL ── */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 200; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(8px); }
+    .overlay.show { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border2); border-radius: 18px; max-width: 580px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,.9); animation: min .2s ease; }
+    @keyframes min { from{opacity:0;transform:scale(.96) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+    /* ── MODAL ── */
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 92vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 32px 80px rgba(0,0,0,.9);
+      animation: min .2s ease;
+    }
+    @keyframes min { from{opacity:0;transform:scale(.96) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+    /* ── Poster banner: fixed height, poster shrinks to fit inside ── */
+    .modal-banner {
+      position: relative;
+      width: 100%;
+      height: 280px;
+      flex-shrink: 0;
+      background: #0a0a0e;
+      border-radius: 18px 18px 0 0;
+      overflow: hidden;
+    }
+    /* Blurred background — same poster stretched to fill, heavily blurred */
+    .modal-banner-bg {
+      position: absolute;
+      inset: -20px;
+      background-size: cover;
+      background-position: center;
+      filter: blur(22px) brightness(0.35) saturate(1.4);
+      z-index: 0;
+      transform: scale(1.1);
+    }
+    /* shimmer while loading */
+    .modal-banner::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(110deg, #111116 30%, #1a1a22 50%, #111116 70%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s ease-in-out infinite;
+      z-index: 1;
+      transition: opacity .4s;
+    }
+    .modal-banner.img-loaded::before { opacity: 0; }
+    /* The poster image — object-fit:contain so the WHOLE poster is visible,
+       never cropped, centred on the blurred background */
+    .modal-banner img {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      display: block;
+      opacity: 0;
+      transition: opacity .35s;
+    }
+    .modal-banner img.loaded { opacity: 1; }
+    /* Gradient fades the bottom of the poster into the card body */
+    .modal-banner-grad {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 55%;
+      background: linear-gradient(transparent, var(--card));
+      z-index: 3;
+      pointer-events: none;
+    }
+    /* Title overlaid on the gradient at the bottom */
+    .modal-banner-title {
+      position: absolute;
+      bottom: .9rem; left: 1.1rem; right: 3rem;
+      z-index: 4;
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1.2;
+      text-shadow: 0 2px 12px rgba(0,0,0,.9);
+    }
+    /* Close button top-right of banner */
+    .modal-close {
+      position: absolute;
+      top: .75rem; right: .75rem;
+      z-index: 10;
+      background: rgba(0,0,0,.7);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: .8rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .modal-close:hover { background: var(--red); border-color: var(--red); }
+
+    /* ── Info section below the banner ── */
+    .modal-body {
+      padding: .9rem 1.2rem 1.3rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .85rem; }
+    .mc { background: var(--card2); border: 1px solid var(--border); color: var(--muted); font-size: .74rem; padding: .2rem .65rem; border-radius: 6px; }
+    .mc.gold { color: var(--gold); border-color: rgba(245,197,24,.3); }
+    .overview-text { font-size: .84rem; color: var(--muted); line-height: 1.72; margin-bottom: 1rem; }
+    .modal-lbl { font-size: .63rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted2); margin-bottom: .4rem; font-weight: 600; }
+    .people { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .9rem; }
+    .person { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: .74rem; padding: 3px 11px; border-radius: 999px; }
+    .genre-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .85rem; }
+    .genre-pill { background: var(--red-dim); color: #ff7575; border: 1px solid rgba(229,9,20,.2); font-size: .72rem; font-weight: 500; padding: 3px 10px; border-radius: 999px; }
+    .modal-divider { height: 1px; background: var(--border); margin: .75rem 0; }
+
+    /* ── FOOTER ── */
+    footer { text-align: center; padding: 2rem; color: var(--muted2); font-size: .76rem; border-top: 1px solid var(--border); }
+    footer strong { color: var(--muted); }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:600px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: .75rem; }
+      .nav-badge { display: none; }
+      .modal-banner { height: 220px; }
+      .modal-banner-title { font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="/">Cine<span>AI</span></a>
+    <div class="nav-links">
+      <a href="/popular" id="n-pop">🔥 Trending</a>
+      <a href="/similar" id="n-sim">🎯 Find Similar</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge">ML POWERED</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page">{% block content %}{% endblock %}</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal" role="dialog" aria-modal="true">
+  <div class="modal">
+
+    <!-- Poster banner — full width, fixed height, poster contained inside -->
+    <div class="modal-banner" id="m-banner">
+      <div class="modal-banner-bg" id="m-bg"></div>
+      <img id="m-img" src="" alt=""
+           onerror="this.src='/static/img/no_poster.png';this.classList.add('loaded')">
+      <div class="modal-banner-grad"></div>
+      <div class="modal-banner-title" id="m-title"></div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Info below the poster -->
+    <div class="modal-body">
+      <div class="modal-chips" id="m-meta"></div>
+      <p class="overview-text" id="m-overview"></p>
+      <div id="m-genres-wrap" style="display:none">
+        <div class="modal-lbl">Genres</div>
+        <div class="genre-row" id="m-genres"></div>
+        <div class="modal-divider"></div>
+      </div>
+      <div id="m-cast-wrap" style="display:none">
+        <div class="modal-lbl">Cast</div>
+        <div class="people" id="m-cast"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer><strong>CineAI</strong> &copy; 2026 &nbsp;·&nbsp; Python, Flask &amp; scikit-learn &nbsp;·&nbsp; 4,800+ movies</footer>
+
+<script>
+(function(){
+  var p=location.pathname;
+  if(p==='/popular') document.getElementById('n-pop').classList.add('on');
+  if(p==='/similar') document.getElementById('n-sim').classList.add('on');
+})();
+
+var TMDB_KEY = '33646a32600aa482e4046ad6f3d701aa';
+var TMDB_API = 'https://api.themoviedb.org/3/movie/';
+var TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
+
+/* Fetch a poster URL for one movie ID.
+   1. Try TMDB directly from the browser (fastest, no Flask bottleneck)
+   2. If that fails, fall back to our /api/poster/ endpoint
+   3. Retry once after 1.5s if both fail (handles transient rate limits) */
+function fetchPosterUrl(mid, attempt) {
+  attempt = attempt || 1;
+  return fetch(TMDB_API + mid + '?api_key=' + TMDB_KEY, {cache: 'force-cache'})
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(d) {
+      return d.poster_path ? TMDB_IMG + d.poster_path : '';
+    })
+    .catch(function() {
+      // Fallback: ask Flask (which has its own cache)
+      return fetch('/api/poster/' + mid)
+        .then(function(r) { return r.json(); })
+        .then(function(d) { return d.url || ''; })
+        .catch(function() { return ''; });
+    });
+}
+
+/* Apply a fetched URL to an img element */
+function applyPoster(img, url) {
+  function ok()  { img.classList.add('loaded'); }
+  function fail(){ img.src = '/static/img/no_poster.png'; img.classList.add('loaded'); }
+  if (url) {
+    img.src = url;
+    if (img.complete && img.naturalWidth > 0) { ok(); return; }
+    img.addEventListener('load',  ok,   { once: true });
+    img.addEventListener('error', fail, { once: true });
+  } else {
+    fail();
+  }
+}
+
+/* Load posters for all cards on the page, staggered 120ms apart so we
+   don't hammer TMDB with 12 simultaneous requests */
+function initPosters() {
+  var imgs = Array.from(document.querySelectorAll('.poster img[data-id]'));
+  imgs.forEach(function(img, i) {
+    var mid = img.getAttribute('data-id');
+    if (!mid) return;
+    setTimeout(function() {
+      fetchPosterUrl(mid)
+        .then(function(url) {
+          if (url) {
+            applyPoster(img, url);
+          } else {
+            // Retry once after 1.5s (handles temporary rate limits)
+            setTimeout(function() {
+              fetchPosterUrl(mid).then(function(u) { applyPoster(img, u); });
+            }, 1500);
+          }
+        });
+    }, i * 120);  // stagger: card 0 = 0ms, card 1 = 120ms, ... card 11 = 1320ms
+  });
+}
+document.addEventListener('DOMContentLoaded', initPosters);
+
+function openModal(d){
+  var img    = document.getElementById('m-img');
+  var bg     = document.getElementById('m-bg');
+  var banner = document.getElementById('m-banner');
+
+  // Reset state
+  img.classList.remove('loaded');
+  banner.classList.remove('img-loaded');
+  img.src = '';
+  bg.style.backgroundImage = '';
+
+  if (d.id) {
+    fetchPosterUrl(String(d.id)).then(function(url) {
+      if (url) {
+        // Set blurred background first (instant visual)
+        bg.style.backgroundImage = 'url(' + url + ')';
+        // Then load the contained poster
+        applyPoster(img, url);
+        img.addEventListener('load', function() {
+          banner.classList.add('img-loaded');
+        }, { once: true });
+      } else {
+        applyPoster(img, '');
+      }
+    });
+  } else {
+    applyPoster(img, '');
+  }
+
+  document.getElementById('m-title').textContent = d.title || '';
+  document.getElementById('m-overview').textContent = d.overview || 'No overview available.';
+
+  var meta = document.getElementById('m-meta'); meta.innerHTML = '';
+  if(d.vote_average) meta.innerHTML += '<span class="mc gold">⭐ '+parseFloat(d.vote_average).toFixed(1)+'</span>';
+  if(d.score)        meta.innerHTML += '<span class="mc gold">🏆 '+parseFloat(d.score).toFixed(2)+'</span>';
+  if(d.release_date) meta.innerHTML += '<span class="mc">📅 '+String(d.release_date).slice(0,4)+'</span>';
+  if(d.director)     meta.innerHTML += '<span class="mc">🎬 '+d.director+'</span>';
+
+  var genres = d.genres_list || []; var gw = document.getElementById('m-genres-wrap');
+  if(genres.length){
+    document.getElementById('m-genres').innerHTML = genres.map(function(g){ return '<span class="genre-pill">'+g+'</span>'; }).join('');
+    gw.style.display = 'block';
+  } else { gw.style.display = 'none'; }
+
+  var cast = d.cast_display || d.cast_list || []; var cw = document.getElementById('m-cast-wrap');
+  if(cast.length){
+    document.getElementById('m-cast').innerHTML = cast.map(function(c){ return '<span class="person">'+c+'</span>'; }).join('');
+    cw.style.display = 'block';
+  } else { cw.style.display = 'none'; }
+
+  document.getElementById('modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(){ document.getElementById('modal').classList.remove('show'); document.body.style.overflow=''; }
+document.getElementById('modal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

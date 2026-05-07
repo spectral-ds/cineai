@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# ML cache — rebuilt automatically on first startup
+cache/pop.pkl
+cache/cb.pkl
+cache/sim.npy
+
+# Poster cache — keep this so posters load fast after first visit
+# cache/poster_paths.json
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

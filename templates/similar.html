@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{% if query %}Similar to {{ query }}{% else %}Find Similar{% endif %} · CineAI{% endblock %}
+{% block content %}
+
+<div class="sec-head">
+  <h2>🎯 {% if query %}Similar to <span>{{ query }}</span>{% else %}Find Similar Movies{% endif %}</h2>
+  {% if movies %}<span class="count-pill">{{ movies|length }} results</span>{% endif %}
+</div>
+
+<!-- Search bar always visible at the top -->
+<div class="searchbar">
+  <form action="/similar" method="get" style="display:contents;">
+    <input type="text" name="title" value="{{ query }}"
+           placeholder="Type a movie title…" autocomplete="off"
+           list="tl" id="sim-inp">
+    <datalist id="tl"></datalist>
+    <button type="submit" class="btn">Search</button>
+  </form>
+</div>
+
+{% if error %}
+<div class="empty">
+  <div class="empty-icon">🔍</div>
+  <h3>{{ error }}</h3>
+  <p>Try a partial title — e.g. <em>"batman"</em> instead of the full name.</p>
+</div>
+
+{% elif not query %}
+<div class="empty">
+  <div class="empty-icon">🎬</div>
+  <h3>Search for a movie above</h3>
+  <p>Type any title and we'll find 12 movies that feel just like it.</p>
+  <!-- Quick suggestions -->
+  <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:.4rem; margin-top:1.5rem;">
+    {% for title in ['Inception','The Dark Knight','Interstellar','Parasite','The Avengers','Pulp Fiction'] %}
+    <a href="/similar?title={{ title }}"
+       style="background:var(--card2); border:1px solid var(--border); color:var(--muted); font-size:.8rem; padding:.3rem .85rem; border-radius:999px; text-decoration:none; transition:all .15s;"
+       onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--border2)'"
+       onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">
+      {{ title }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+{% elif movies %}
+<div class="grid">
+  {% for m in movies %}
+  <div class="card" onclick='openModal({{ m | tojson }})'>
+    <div class="poster">
+      <img data-id="{{ m.id }}" src="" alt="{{ m.title }}" loading="lazy"
+           onerror="this.src='/static/img/no_poster.png';this.classList.add('loaded')">
+      {% if m.vote_average %}
+      <div class="badge">⭐ {{ "%.1f"|format(m.vote_average) }}</div>
+      {% endif %}
+    </div>
+    <div class="info">
+      <h3>{{ m.title }}</h3>
+      <div class="tags">
+        {% for g in (m.genres_list or [])[:3] %}<span class="tag">{{ g }}</span>{% endfor %}
+      </div>
+      <div class="meta">
+        {% if m.release_date %}{{ m.release_date[:4] }}{% endif %}
+        {% if m.director %}&nbsp;·&nbsp;{{ m.director }}{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty">
+  <div class="empty-icon">😕</div>
+  <h3>No results</h3>
+  <p>Couldn't find anything. Try a shorter or different title.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script>
+/* Populate autocomplete from API */
+fetch('/api/titles')
+  .then(function(r){ return r.json(); })
+  .then(function(titles){
+    var dl = document.getElementById('tl');
+    titles.slice(0,400).forEach(function(t){
+      var o = document.createElement('option');
+      o.value = t; dl.appendChild(o);
+    });
+  }).catch(function(){});
+
+/* Focus styling */
+var inp = document.getElementById('sim-inp');
+if(inp){
+  inp.addEventListener('focus', function(){ this.style.borderColor='var(--red)'; });
+  inp.addEventListener('blur',  function(){ this.style.borderColor='var(--border)'; });
+}
+</script>
+{% endblock %}
